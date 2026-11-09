@@ -1,10 +1,10 @@
 # Ogust MCP
 
-Serveur MCP local pour l’API Ogust V2. Il couvre les 62 objets de la documentation avec des outils de recherche, de lecture, de création, de mise à jour et de suppression. Les opérations disponibles pour chaque objet dépendent de l’API et des droits du compte Ogust.
+A local MCP server for the Ogust V2 API. It covers all 62 documented objects through tools for searching, reading, creating, updating, and deleting records. Available operations vary by object and depend on your Ogust account permissions.
 
 ## Installation
 
-Prérequis : Node.js 22.9 ou ultérieur et deux clés API depuis la fiche société du compte Ogust.
+You'll need Node.js 22.9 or later and the two API keys from your Ogust company profile.
 
 ```sh
 git clone https://github.com/hugofrely/ogust-mcp.git
@@ -15,11 +15,11 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-Renseigner `OGUST_PUBLIC_KEY` et `OGUST_PRIVATE_KEY` dans `.env`. Le mode `OGUST_ACCESS=read` expose les outils de consultation. Pour autoriser la création, la modification et la suppression, définir `OGUST_ACCESS=full` dans ce fichier.
+Set `OGUST_PUBLIC_KEY` and `OGUST_PRIVATE_KEY` in `.env`. With `OGUST_ACCESS=read`, only read and search tools are available. Set `OGUST_ACCESS=full` to enable creation, updates, and deletion.
 
-### Brancher un client MCP
+### Connect an MCP client
 
-Le serveur parle MCP sur **stdio**. Voici une configuration pour un client qui accepte `mcpServers`. Remplacer les deux chemins par les chemins absolus du dépôt cloné. Si le client ne trouve pas Node.js, remplacer `node` par le chemin renvoyé par `command -v node`.
+The server uses the **stdio** transport. If your client supports `mcpServers`, use the configuration below and replace both paths with the absolute paths in your local clone. If the client cannot find Node.js, replace `node` with the path returned by `command -v node`.
 
 ```json
 {
@@ -27,56 +27,56 @@ Le serveur parle MCP sur **stdio**. Voici une configuration pour un client qui a
     "ogust": {
       "command": "node",
       "args": [
-        "--env-file-if-exists=/chemin/vers/ogust-mcp/.env",
-        "/chemin/vers/ogust-mcp/dist/index.js"
+        "--env-file-if-exists=/path/to/ogust-mcp/.env",
+        "/path/to/ogust-mcp/dist/index.js"
       ]
     }
   }
 }
 ```
 
-Avec la CLI Codex, depuis le dépôt :
+To register the server with the Codex CLI, run this command from the repository directory.
 
 ```sh
 codex mcp add ogust -- "$(command -v node)" "--env-file-if-exists=$PWD/.env" "$PWD/dist/index.js"
 ```
 
-Redémarrer le client, puis appeler `ogust_verify_auth` pour vérifier les clés.
+Restart your MCP client, then call `ogust_verify_auth` to check your credentials.
 
-## Outils
+## Tools
 
-| Outil | Entrée et comportement |
+| Tool | Inputs and behavior |
 | --- | --- |
-| `ogust_catalog` | Sans argument, liste les objets. Avec `resource`, affiche les champs, les champs marqués requis à la création et les méthodes routées par le MCP. |
-| `ogust_verify_auth` | Vérifie l’obtention d’un jeton. Retourne uniquement un indicateur d’authentification. |
-| `ogust_search` | `resource`, `filters`, `pagenum` (1 par défaut) et `nbperpage` (20 par défaut). Conserve les métadonnées de pagination Ogust. |
-| `ogust_get` | `resource` et `params` contenant l’identifiant ou la clé composite de l’objet. |
-| `ogust_get_list` | `key` au format `objet.champ`. Renvoie les valeurs autorisées pour ce champ. |
-| `ogust_set` | En mode `full`, crée ou modifie l’objet. Fournir `resource` et les champs Ogust dans `params`. |
-| `ogust_remove` | En mode `full`, supprime l’objet identifié dans `params`. |
+| `ogust_catalog` | Lists available objects when called without arguments. Pass `resource` to see its fields, which fields the docs mark as required for creation, and which methods the server routes for that object. |
+| `ogust_verify_auth` | Checks whether the server can obtain a token and returns the authentication status. |
+| `ogust_search` | Accepts `resource`, `filters`, `pagenum` (default 1), and `nbperpage` (default 20). Returns Ogust pagination metadata alongside the results. |
+| `ogust_get` | Accepts `resource` and `params` with the object's ID or composite key. |
+| `ogust_get_list` | Accepts a `key` in `object.field` format and returns the allowed values for that field. |
+| `ogust_set` | Creates or updates an object in `full` mode. Pass `resource` and supply the Ogust fields in `params`. |
+| `ogust_remove` | Deletes the object identified in `params` in `full` mode. |
 
-`list` passe par `ogust_get_list`. `historyLog` et `communication` sont accessibles en consultation. Pour les autres objets, Ogust décide quelles opérations sont acceptées. L’activation et la configuration des webhooks se font dans Ogust.
+Use `ogust_get_list` for the `list` object. The `historyLog` and `communication` objects are read-only. Ogust determines which operations are available for other objects. Configure and enable webhooks in Ogust.
 
-### Exemples de paramètres
+### Example arguments
 
-- Rechercher les clients dont le nom commence par Dup avec `ogust_search` et `{"resource":"customer","filters":{"last_name":"Dup%"},"nbperpage":10}`.
-- Consulter la fiche du client 123456 avec `ogust_get` et `{"resource":"customer","params":{"id_customer":"123456"}}`.
-- Rechercher les factures du client 123456 avec `ogust_search` et `{"resource":"invoice","filters":{"id_customer":"123456"}}`.
-- Récupérer les moyens de paiement autorisés avec `ogust_get_list` et `{"key":"customer.method_of_payment"}`.
-- Mettre à jour le commentaire d’une fiche avec `ogust_set` et `{"resource":"customer","params":{"id_customer":"123456","comment":"À rappeler"}}`.
+- Find customers whose last name starts with Dup using `ogust_search` with `{"resource":"customer","filters":{"last_name":"Dup%"},"nbperpage":10}`.
+- Read the record for customer 123456 using `ogust_get` with `{"resource":"customer","params":{"id_customer":"123456"}}`.
+- Find invoices for customer 123456 using `ogust_search` with `{"resource":"invoice","filters":{"id_customer":"123456"}}`.
+- Get the allowed payment methods using `ogust_get_list` with `{"key":"customer.method_of_payment"}`.
+- Update a customer note using `ogust_set` with `{"resource":"customer","params":{"id_customer":"123456","comment":"Call back"}}`.
 
-Les filtres avancés Ogust comme `@in|A|B` passent tels quels. Pour les champs imbriqués, passer des objets ou tableaux JSON. Le serveur les encode au format de formulaire PHP. Les valeurs `null` sont omises. Pour les grands identifiants, préférer des chaînes de caractères.
+The server passes advanced Ogust filters such as `@in|A|B` through as supplied. Use JSON objects or arrays for nested fields. The server encodes them as PHP form parameters and omits `null` values. Pass large identifiers as strings to preserve precision.
 
-## Authentification et tests
+## Authentication and tests
 
-Les clés sont lues depuis l’environnement du processus. Le serveur signe `getToken` en HMAC-SHA1, garde le jeton en mémoire et le renouvelle avant son expiration. Si Ogust rejette un jeton pendant une lecture, le serveur renouvelle le jeton et rejoue la lecture une seule fois. Une écriture ou une suppression est envoyée une seule fois par appel MCP.
+The server reads the API keys from its environment. It signs `getToken` requests with HMAC-SHA1, caches the token in memory, and refreshes it before expiration. If Ogust rejects a token during a read, the server refreshes it and retries the read once. The server sends each write or delete request once per MCP call.
 
-`.env` est exclu du dépôt Git. Les outils en mode `full` utilisent les droits associés aux clés configurées. Restreindre l’accès à ces clés et vérifier la cible avant de lancer une suppression.
+Git ignores `.env`. In `full` mode, the tools use the permissions associated with the configured API keys. Restrict access to those keys and verify the target record before deleting it.
 
 ```sh
 npm test
 ```
 
-Les tests lancent le serveur via stdio et simulent les réponses Ogust pour vérifier la signature, le cache, le renouvellement du jeton, la pagination et le routage des mutations.
+The tests launch the server over stdio and mock Ogust responses to check request signing, token caching and renewal, pagination, and the routing of write and delete requests.
 
-[Documentation de l’API Ogust V2](https://login.ogust.app/api/v2/documentation.php)
+[Ogust V2 API documentation](https://login.ogust.app/api/v2/documentation.php)
