@@ -2,9 +2,9 @@
 
 A local MCP server for the Ogust V2 API. It covers all 62 documented objects through tools for searching, reading, creating, updating, and deleting records. Available operations vary by object and depend on your Ogust account permissions.
 
-## Installation
+## Install locally
 
-You'll need Node.js 22.9 or later and the two API keys from your Ogust company profile.
+You'll need Git, Node.js 22.9 or later, and the two API keys from your Ogust company profile. Run these commands in a terminal on macOS or Linux for a fresh install.
 
 ```sh
 git clone https://github.com/hugofrely/ogust-mcp.git
@@ -15,17 +15,48 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-Set `OGUST_PUBLIC_KEY` and `OGUST_PRIVATE_KEY` in `.env`. With `OGUST_ACCESS=read`, only read and search tools are available. Set `OGUST_ACCESS=full` to enable creation, updates, and deletion.
+Open `.env` in your local editor and fill in `OGUST_PUBLIC_KEY` and `OGUST_PRIVATE_KEY`. Leave `OGUST_ACCESS=read` for read-only access, or set `OGUST_ACCESS=full` to enable creation, updates, and deletion. Keep an existing `.env` when reinstalling or updating.
 
-### Connect an MCP client
+The server runs locally over **stdio**. Choose your client below, or [ask your coding agent to install it](#ask-claude-or-codex-to-install-it).
 
-The server uses the **stdio** transport. If your client supports `mcpServers`, use the configuration below and replace both paths with the absolute paths in your local clone. If the client cannot find Node.js, replace `node` with the path returned by `command -v node`.
+### Codex
+
+From the repository directory, register `ogust` with the Codex CLI and check the saved configuration. The entry is available to the CLI and the Codex desktop app.
+
+```sh
+codex mcp add ogust -- "$(command -v node)" "--env-file-if-exists=$PWD/.env" "$PWD/dist/index.js"
+codex mcp get ogust
+```
+
+For manual configuration, add this entry to `~/.codex/config.toml`. Use absolute paths to Node.js and your local clone. If an `ogust` entry already exists, check its paths before editing it. [Codex MCP documentation](https://developers.openai.com/codex/mcp)
+
+```toml
+[mcp_servers.ogust]
+command = "/path/to/node"
+args = [
+  "--env-file-if-exists=/path/to/ogust-mcp/.env",
+  "/path/to/ogust-mcp/dist/index.js",
+]
+```
+
+### Claude Code
+
+From the repository directory, register the server at user scope so it is available across your local projects. Open a new Claude Code session and use `/mcp` to check its connection status. [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp)
+
+```sh
+claude mcp add --transport stdio --scope user ogust -- "$(command -v node)" "--env-file-if-exists=$PWD/.env" "$PWD/dist/index.js"
+claude mcp get ogust
+```
+
+### Claude Desktop
+
+In Claude Desktop, open **Settings → Developer → Edit Config** to open `claude_desktop_config.json`. Add the `ogust` entry under `mcpServers`, keeping any other entries. Set `command` to the absolute path returned by `command -v node` and replace both repository paths with paths from your local clone. Fully quit and reopen Claude Desktop after saving. [Local MCP servers in Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers)
 
 ```json
 {
   "mcpServers": {
     "ogust": {
-      "command": "node",
+      "command": "/path/to/node",
       "args": [
         "--env-file-if-exists=/path/to/ogust-mcp/.env",
         "/path/to/ogust-mcp/dist/index.js"
@@ -35,13 +66,15 @@ The server uses the **stdio** transport. If your client supports `mcpServers`, u
 }
 ```
 
-To register the server with the Codex CLI, run this command from the repository directory.
+### Verify the connection
 
-```sh
-codex mcp add ogust -- "$(command -v node)" "--env-file-if-exists=$PWD/.env" "$PWD/dist/index.js"
-```
+Open a new session or restart the desktop app after registering the server. Ask it to run `ogust_catalog` to verify that the server loads. Once you have saved both keys locally, ask it to run `ogust_verify_auth` to check whether Ogust accepts them. Both checks leave Ogust records untouched.
 
-Restart your MCP client, then call `ogust_verify_auth` to check your credentials.
+### Ask Claude or Codex to install it
+
+Paste this prompt into a local Claude Code or Codex session with terminal access. Replace `[client]` with `Claude Code`, `Claude Desktop`, or `Codex`.
+
+> Install the Ogust MCP server from https://github.com/hugofrely/ogust-mcp for [client] on this computer. Follow the README. Reuse an existing clone if present, check that Node.js is 22.9 or newer, run `npm ci` and `npm run build`, and register the local stdio server as `ogust` using absolute paths. Preserve existing MCP entries and any existing `.env`. If `.env` is missing, create it from `.env.example` and tell me where to enter my Ogust keys locally. Keep credentials out of chat and command output. Check that the server exposes `ogust_catalog` if the client can load it in this session, and tell me if I need to restart. Leave Ogust records untouched.
 
 ## Tools
 
